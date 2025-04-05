@@ -35,8 +35,7 @@ A modern, full-featured learning management system built with Next.js 14, TypeSc
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/learning-management-system.git
-cd learning-management-system
+git clone [https://github.com/Rachit220504/LMS.git]
 ```
 
 2. Install dependencies
@@ -103,5 +102,4 @@ EMAIL_SERVER_SECURE="false"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-## Project Structure
 
