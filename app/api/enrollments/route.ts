@@ -139,9 +139,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { studentId, courseId } = body;
     
-    if (!studentId || !courseId) {
+    if (!courseId) {
       return NextResponse.json(
-        { error: "Student ID and Course ID are required" },
+        { error: "Course ID is required" },
         { status: 400 }
       );
     }
@@ -160,13 +160,10 @@ export async function POST(request: Request) {
       );
     }
     
-    // Check if user is allowed to add enrollments (teacher of the course or admin)
+    // Check if the course exists
     const course = await prisma.course.findUnique({
       where: {
         id: courseId,
-      },
-      select: {
-        teacherId: true,
       },
     });
     
@@ -176,47 +173,21 @@ export async function POST(request: Request) {
         { status: 404 }
       );
     }
+
+    // *** IMPORTANT CHANGE: Use current user's ID for self-enrollment ***
+    const finalStudentId = studentId || user.id;
     
-    if (course.teacherId !== user.id && user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Only the course teacher or an admin can add students" },
-        { status: 403 }
-      );
-    }
-    
-    // Check if the student exists
-    const student = await prisma.user.findUnique({
+    // Check if already enrolled
+    const existingEnrollment = await prisma.enrollment.findFirst({
       where: {
-        id: studentId,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-      },
-    });
-    
-    if (!student) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
-      );
-    }
-    
-    // Check if the student is already enrolled
-    const existingEnrollment = await prisma.enrollment.findUnique({
-      where: {
-        studentId_courseId: {
-          studentId,
-          courseId,
-        },
+        studentId: finalStudentId,
+        courseId,
       },
     });
     
     if (existingEnrollment) {
       return NextResponse.json(
-        { error: "Student is already enrolled in this course" },
+        { error: "Already enrolled in this course" },
         { status: 400 }
       );
     }
@@ -224,7 +195,7 @@ export async function POST(request: Request) {
     // Create the enrollment
     const enrollment = await prisma.enrollment.create({
       data: {
-        studentId,
+        studentId: finalStudentId,
         courseId,
         progress: 0,
       },

@@ -31,65 +31,116 @@ export default function StudentCoursesPage() {
   const [availableCourses, setAvailableCourses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingAvailable, setIsLoadingAvailable] = useState(true);
+  const [isEnrolling, setIsEnrolling] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("enrolled");
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function fetchEnrolledCourses() {
-      try {
-        setIsLoading(true);
-        const response = await fetch("/api/courses/enrolled");
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch enrolled courses");
-        }
-        
-        const data = await response.json();
-        setCourses(data);
-      } catch (error) {
-        console.error("Error fetching enrolled courses:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load your courses. Please try again later.",
-        });
-      } finally {
-        setIsLoading(false);
+  // Move these functions outside useEffect so they can be called from handleEnroll
+  const fetchEnrolledCourses = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/courses/enrolled");
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch enrolled courses");
       }
+      
+      const data = await response.json();
+      setCourses(data);
+    } catch (error) {
+      console.error("Error fetching enrolled courses:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load your courses. Please try again later.",
+      });
+    } finally {
+      setIsLoading(false);
     }
+  };
+  
+  const fetchAvailableCourses = async () => {
+    if (activeTab !== "available") return;
     
-    fetchEnrolledCourses();
-  }, [toast]);
+    try {
+      setIsLoadingAvailable(true);
+      const response = await fetch("/api/courses/available");
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch available courses");
+      }
+      
+      const data = await response.json();
+      setAvailableCourses(data);
+    } catch (error) {
+      console.error("Error fetching available courses:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load available courses. Please try again later.",
+      });
+    } finally {
+      setIsLoadingAvailable(false);
+    }
+  };
+
+  // Add the handleEnroll function
+  const handleEnroll = async (courseId: string, e: React.MouseEvent) => {
+    // Prevent the event from bubbling up to the card link
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      // Show loading state
+      setIsEnrolling(true);
+      
+      const response = await fetch("/api/enrollments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ courseId }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to enroll in course");
+      }
+      
+      // Get the enrolled course details for the success message
+      const enrolledCourse = availableCourses.find(course => course.id === courseId);
+      
+      toast({
+        title: "Success",
+        description: `You've been enrolled in ${enrolledCourse?.title}`,
+      });
+      
+      // Refresh both course lists
+      await fetchEnrolledCourses();
+      await fetchAvailableCourses();
+      
+      // Switch to enrolled tab to show the newly enrolled course
+      setActiveTab("enrolled");
+    } catch (error) {
+      console.error("Error enrolling in course:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to enroll in course",
+      });
+    } finally {
+      setIsEnrolling(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchAvailableCourses() {
-      if (activeTab !== "available") return;
-      
-      try {
-        setIsLoadingAvailable(true);
-        const response = await fetch("/api/courses/available");
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch available courses");
-        }
-        
-        const data = await response.json();
-        setAvailableCourses(data);
-      } catch (error) {
-        console.error("Error fetching available courses:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load available courses. Please try again later.",
-        });
-      } finally {
-        setIsLoadingAvailable(false);
-      }
-    }
-    
+    fetchEnrolledCourses();
+  }, []);
+
+  useEffect(() => {
     fetchAvailableCourses();
-  }, [activeTab, toast]);
+  }, [activeTab]);
 
   // Filter courses based on search
   const filteredCourses = courses.filter(course => 
@@ -241,7 +292,6 @@ export default function StudentCoursesPage() {
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Available courses go here */}
               {filteredAvailableCourses.map(course => (
                 <Card key={course.id} className="overflow-hidden h-full">
                   <div className="h-48 bg-gray-200 relative overflow-hidden">
@@ -262,7 +312,21 @@ export default function StudentCoursesPage() {
                     <p className="text-gray-500 text-sm mb-3 line-clamp-2">{course.description}</p>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-500">Instructor: {course.teacher.name}</span>
-                      <Button size="sm" variant="outline" onClick={() => {}}>Enroll</Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => handleEnroll(course.id, e)}
+                        disabled={isEnrolling}
+                      >
+                        {isEnrolling ? (
+                          <span className="flex items-center">
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            Enrolling...
+                          </span>
+                        ) : (
+                          "Enroll"
+                        )}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

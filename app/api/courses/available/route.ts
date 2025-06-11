@@ -29,36 +29,36 @@ export async function GET() {
       );
     }
 
-    // Get courses where the user IS enrolled
-    const enrolledCourses = await prisma.course.findMany({
-      where: {
-        students: {
-          some: {
-            studentId: user.id,
+    // Get courses where the user is NOT enrolled
+    const availableCourses = await prisma.course.findMany({
+        where: {
+          students: {
+            none: {
+              studentId: user.id,
+            },
           },
         },
-      },
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            name: true,
+        include: {
+          teacher: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              students: true, // Also update this to match
+            },
           },
         },
-        _count: {
-          select: {
-            students: true,
-          },
+        orderBy: {
+          createdAt: "desc",
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+      });
 
-    return NextResponse.json(enrolledCourses);
+    return NextResponse.json(availableCourses);
   } catch (error) {
-    console.error("[ENROLLED_COURSES_GET]", error);
+    console.error("[AVAILABLE_COURSES_GET]", error);
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 }
