@@ -199,7 +199,7 @@ export default function RegisterPage() {
                 </FormItem>
               )}
             />
-            {(watchRole === "ADMIN" || watchRole === "TEACHER") && (
+            {(watchRole === "ADMIN" || watchRole==="TEACHER") && (
               <FormField
                 control={form.control}
                 name="adminCode"
@@ -215,7 +215,7 @@ export default function RegisterPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Required for admin or teacher registration.
+                      Required for admin and teacher registration.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

@@ -34,10 +34,14 @@ export async function GET(
           },
         },
         submissions: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+          include: {
+            student: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
           },
         },
       },

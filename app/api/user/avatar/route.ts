@@ -6,7 +6,7 @@ import { writeFile } from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
-const AVATARS_DIR = path.join(process.cwd(), "public/uploads/avatars");
+const AVATARS_DIR = path.join(process.cwd(), "uploads/avatars");
 
 export async function POST(request: Request) {
   try {

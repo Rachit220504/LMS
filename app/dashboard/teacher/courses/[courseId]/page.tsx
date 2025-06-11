@@ -232,6 +232,59 @@ export default function TeacherCourseDetailPage({ params }: { params: { courseId
 
   return (
     <div className="space-y-6">
+      <Dialog open={isAssignmentDialogOpen} onOpenChange={setIsAssignmentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Assignment</DialogTitle>
+            <DialogDescription>
+              Add a new assignment for your students.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateAssignment}>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">Title</Label>
+                <Input 
+                  id="title"
+                  name="title"
+                  value={assignmentFormData.title}
+                  onChange={handleInputChange}
+                  placeholder="Assignment title"
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description"
+                  name="description"
+                  value={assignmentFormData.description}
+                  onChange={handleInputChange}
+                  placeholder="Provide details about the assignment"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Input 
+                  id="dueDate"
+                  name="dueDate"
+                  type="date"
+                  value={assignmentFormData.dueDate}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+            <DialogFooter className="mt-4">
+              <Button type="button" variant="outline" onClick={() => setIsAssignmentDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Assignment"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">{course.title}</h1>
         <div className="flex items-center gap-2">
